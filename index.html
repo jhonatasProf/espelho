@@ -7,35 +7,52 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{--board:#12302a;--board2:#0c231f;--chalk:#edefe8;--dim:#9db3aa;--yellow:#f2c94c;--bad:#ff8a7a}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%}
 body{background:var(--board);color:var(--chalk);font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:18px;line-height:1.5}
-main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:20px;text-align:center}
+main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px;text-align:center}
 h1{font-size:clamp(28px,5vw,44px);margin:0}
-p{margin:0;max-width:52ch}
+p{margin:0;max-width:52ch;overflow-wrap:anywhere}
 .dim{color:var(--dim)}
-button,.btn{font:inherit;font-weight:700;background:var(--yellow);color:#1b1b12;border:0;border-radius:10px;padding:14px 22px;cursor:pointer;min-height:48px}
+button,.btn{font:inherit;font-weight:700;background:var(--yellow);color:#1b1b12;border:0;border-radius:10px;padding:12px 18px;cursor:pointer;min-height:48px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 button.sec{background:transparent;color:var(--chalk);border:2px solid var(--dim)}
 button:disabled{opacity:.4;cursor:not-allowed}
-button:focus-visible,input:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
-.row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+.f{font:inherit;width:100%;padding:12px;border-radius:10px;border:2px solid var(--dim);background:var(--board);color:var(--chalk)}
+#pinIn{font-size:34px;text-align:center;letter-spacing:.3em}
 #pin{font-size:clamp(64px,16vw,170px);font-weight:700;letter-spacing:.06em;color:var(--yellow);line-height:1}
-#stage{flex:1;width:100%;display:none;align-items:center;justify-content:center;min-height:0}
-#stage img,#stage video,#stage iframe{max-width:100%;max-height:60vh;width:100%;height:60vh;object-fit:contain;border:0;background:var(--board2)}
-#qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px}
-#qr{background:#fff;padding:10px;border-radius:12px;line-height:0}
-#qr:empty{display:none}
-#stage img{width:auto;height:auto}
-.proj.live #wait{display:none}
-.proj.live #stage{display:flex}
-.proj.live main{justify-content:flex-start}
-input[type=text]{font:inherit;font-size:36px;text-align:center;letter-spacing:.3em;width:min(320px,90vw);padding:10px;border-radius:10px;border:2px solid var(--dim);background:var(--board2);color:var(--chalk)}
 #st,#sst{min-height:1.6em;color:var(--dim)}
 .err{color:var(--bad)!important}
-.card{background:var(--board2);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;align-items:center;width:min(440px,100%)}
+.card{background:var(--board2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;align-items:stretch;width:100%}
+.stack{display:flex;flex-direction:column;gap:14px;width:min(460px,100%)}
+.chk{display:flex;gap:8px;align-items:center}
+/* projetor */
+#proj main{justify-content:flex-start}
+#wait{padding-top:4vh}
+#stage{display:none;width:100%;height:62vh;gap:12px;overflow:auto;grid-template-columns:1fr}
+.live #wait{display:none}
+.live #stage{display:grid}
+.grid #stage{grid-template-columns:repeat(auto-fit,minmax(320px,1fr));grid-auto-rows:minmax(240px,1fr)}
+.tile{display:none;flex-direction:column;background:var(--board2);border-radius:12px;min-height:0;overflow:hidden}
+.focus .tile.on,.grid .tile{display:flex}
+.cap{padding:6px 14px;color:var(--yellow);font-weight:700;text-align:left}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;padding:8px}
+.body img,.body video,.body canvas{max-width:100%;max-height:100%;object-fit:contain}
+.body iframe{width:100%;height:100%;border:0;background:#fff}
+.msg{font-size:clamp(26px,4.6vw,68px);font-weight:700;line-height:1.2;overflow:auto;max-height:100%;overflow-wrap:anywhere}
+#pend:empty,#chips:empty,#qr:empty{display:none}
+#pend{display:flex;flex-direction:column;gap:8px;align-items:center}
+.ask{display:flex;gap:10px;align-items:center;background:var(--board2);padding:8px 14px;border-radius:12px;border:2px solid var(--yellow)}
+#qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:6px}
+#qr{background:#fff;padding:10px;border-radius:12px;line-height:0}
+/* celular */
+.big{font-size:22px;min-width:64px}
+#dinfo{font-weight:700;min-width:70px;color:var(--yellow)}
 @media (prefers-reduced-motion:no-preference){button{transition:transform .1s}button:active{transform:scale(.97)}}
 </style>
 </head>
@@ -50,19 +67,23 @@ input[type=text]{font:inherit;font-size:36px;text-align:center;letter-spacing:.3
   </div>
 </main>
 
-<div id="proj" class="proj" hidden>
+<div id="proj" hidden>
   <main>
     <div id="wait">
       <p class="dim">No celular, escaneie o QR code abaixo ou abra esta página e digite o PIN:</p>
       <div id="pin" aria-live="polite">······</div>
     </div>
     <div id="stage"></div>
+    <div id="pend" aria-live="polite"></div>
+    <div id="chips" class="row"></div>
     <div id="st">Gerando PIN…</div>
     <div class="row">
       <button class="sec" id="bFull">Tela cheia</button>
       <button class="sec" id="bSom">Ativar som</button>
+      <button class="sec" id="bGrade">Ver todos em grade</button>
       <button class="sec" id="bLimpa">Limpar tela</button>
       <button class="sec" id="bNovo">Novo PIN</button>
+      <label class="chk"><input type="checkbox" id="apr" checked> Exigir aprovação</label>
     </div>
     <div id="qrbox">
       <div id="qr"></div>
@@ -73,19 +94,48 @@ input[type=text]{font:inherit;font-size:36px;text-align:center;letter-spacing:.3
 
 <main id="send" hidden>
   <h1>Enviar ao projetor</h1>
-  <div class="card" id="login">
-    <label for="pinIn">PIN mostrado no projetor</label>
-    <input id="pinIn" type="text" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000">
-    <button id="bConn">Conectar</button>
+  <div class="stack" id="login">
+    <div class="card">
+      <label for="nome">Seu nome</label>
+      <input id="nome" class="f" type="text" maxlength="30" autocomplete="given-name" placeholder="Ex.: Maria">
+      <label for="pinIn">PIN mostrado no projetor</label>
+      <input id="pinIn" class="f" type="text" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000">
+      <button id="bConn">Conectar</button>
+    </div>
   </div>
-  <div class="card" id="acoes" hidden>
-    <input id="file" type="file" accept="image/*,video/*,application/pdf,audio/*" hidden>
-    <button id="bFile">Enviar arquivo</button>
-    <button id="bCam">Transmitir câmera</button>
-    <button id="bFlip" class="sec">Trocar câmera (frente/trás)</button>
-    <button id="bTela">Transmitir tela</button>
-    <button id="bStop" class="sec" hidden>Parar transmissão</button>
-    <button id="bSair" class="sec">Desconectar</button>
+  <div class="stack" id="acoes" hidden>
+    <div class="card">
+      <input id="file" type="file" accept="image/*,video/*,application/pdf,audio/*" hidden>
+      <button id="bFile">Enviar arquivo</button>
+    </div>
+    <div class="card">
+      <input id="deckIn" type="file" accept="application/pdf,image/*" multiple hidden>
+      <button id="bDeck">Enviar slides (PDF ou imagens)</button>
+      <div class="row">
+        <button class="sec big" id="bPrev" aria-label="Slide anterior">‹</button>
+        <span id="dinfo">- / -</span>
+        <button class="sec big" id="bNext" aria-label="Próximo slide">›</button>
+      </div>
+      <div class="row">
+        <input id="goN" class="f" type="number" min="1" style="width:110px" placeholder="Nº">
+        <button class="sec" id="bGo">Ir para o slide</button>
+      </div>
+    </div>
+    <div class="card">
+      <label for="txt">Mensagem para o projetor</label>
+      <textarea id="txt" class="f" rows="2" maxlength="300"></textarea>
+      <button id="bTxt">Enviar mensagem</button>
+      <label for="lnk">Link</label>
+      <input id="lnk" class="f" type="url" placeholder="https://">
+      <button id="bLnk">Enviar link</button>
+    </div>
+    <div class="card">
+      <button id="bCam">Transmitir câmera</button>
+      <button id="bFlip" class="sec">Trocar câmera (frente/trás)</button>
+      <button id="bTela">Transmitir tela</button>
+      <button id="bStop" class="sec" hidden>Parar transmissão</button>
+      <button id="bSair" class="sec">Desconectar</button>
+    </div>
   </div>
   <div id="sst" aria-live="polite"></div>
 </main>
@@ -93,120 +143,238 @@ input[type=text]{font:inherit;font-size:36px;text-align:center;letter-spacing:.3
 <script>
 const $ = id => document.getElementById(id);
 const PREFIX = 'espelho-pin-';
+/* Para redes que bloqueiam conexão direta, adicione um servidor TURN aqui:
+   {urls:'turn:SEU_SERVIDOR:3478', username:'usuario', credential:'senha'} */
+const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 const go = h => { location.hash = h; location.reload(); };
-let peer, conn, call, localStream, facing = 'environment', pin = '', lastUrl = null;
-
-function msg(el, t, bad){ el.textContent = t; el.classList.toggle('err', !!bad); }
+const msg = (el, t, bad) => { el.textContent = t; el.classList.toggle('err', !!bad); };
+let peer, conn, call, localStream, facing = 'environment', pin = '';
 
 if (typeof Peer === 'undefined'){
   document.body.innerHTML = '<main><h1>Sem conexão com a biblioteca</h1><p>Verifique a internet e recarregue a página.</p></main>';
-} else if (location.hash === '#projetor') projetor();
-else if (location.hash.startsWith('#enviar')) enviar();
+} else {
+  if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  if (location.hash === '#projetor') projetor();
+  else if (location.hash.startsWith('#enviar')) enviar();
+}
 
-/* ---------- PROJETOR ---------- */
+/* ================= PROJETOR ================= */
 function projetor(){
   $('menu').hidden = true; $('proj').hidden = false;
-  const st = $('st');
-  const stage = $('stage');
-  let somLigado = false;
+  const st = $('st'), stage = $('stage'), root = $('proj');
+  const tiles = new Map(), pend = new Map();
+  let focus = null, som = false, grade = false;
 
-  function limpar(){
-    if (lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
-    stage.innerHTML = '';
-    $('proj').classList.remove('live');
-  }
-  function mostrar(el){ limpar(); stage.appendChild(el); $('proj').classList.add('live'); }
-
-  function desenharQr(p){
-    const box = $('qr');
-    box.innerHTML = '';
-    if (typeof QRCode === 'undefined' || location.protocol === 'file:') return;
-    new QRCode(box, {
-      text: location.href.split('#')[0] + '#enviar-' + p,
-      width: 150, height: 150,
-      colorDark: '#12302a', colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+  function refresh(){
+    root.classList.toggle('live', tiles.size > 0);
+    root.classList.toggle('grid', grade);
+    root.classList.toggle('focus', !grade);
+    const ch = $('chips'); ch.innerHTML = '';
+    tiles.forEach((t, id) => {
+      const b = document.createElement('button');
+      b.className = 'sec'; b.textContent = (id === focus ? '● ' : '') + t.name;
+      b.onclick = () => { focus = id; refresh(); };
+      const x = document.createElement('button');
+      x.className = 'sec'; x.textContent = '×'; x.setAttribute('aria-label', 'Remover ' + t.name);
+      x.onclick = () => { t.conn.close(); drop(id); };
+      ch.append(b, x);
     });
+    tiles.forEach((t, id) => t.el.classList.toggle('on', id === focus));
+  }
+  function drop(id){
+    const t = tiles.get(id); if (!t) return;
+    t.urls.forEach(u => URL.revokeObjectURL(u));
+    t.el.remove(); tiles.delete(id);
+    if (focus === id) focus = [...tiles.keys()].pop() || null;
+    refresh();
+  }
+  function criar(c, name){
+    const el = document.createElement('div'); el.className = 'tile';
+    const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = name;
+    const body = document.createElement('div'); body.className = 'body';
+    el.append(cap, body); stage.append(el);
+    tiles.set(c.peer, { name, conn: c, el, cap, body, urls: [], deck: null });
+    reset(c.peer); focus = c.peer; refresh();
+    c.send({ t: 'ok' }); msg(st, name + ' conectou.');
+  }
+  function reset(id){
+    const t = tiles.get(id); if (!t) return;
+    const p = document.createElement('p'); p.className = 'dim'; p.textContent = 'Conectado. Aguardando conteúdo…';
+    put(id, p);
+  }
+  function put(id, el, urls){
+    const t = tiles.get(id); if (!t) return;
+    t.urls.forEach(u => URL.revokeObjectURL(u));
+    t.urls = urls || []; t.deck = null; t.cap.textContent = t.name;
+    t.body.replaceChildren(el); focus = id; refresh();
+  }
+  function pedido(c, name){
+    pend.set(c.peer, c);
+    const box = document.createElement('div'); box.className = 'ask'; box.id = 'p-' + c.peer;
+    const s = document.createElement('span'); s.textContent = name + ' quer conectar';
+    const ok = document.createElement('button'); ok.textContent = 'Aceitar';
+    const no = document.createElement('button'); no.className = 'sec'; no.textContent = 'Recusar';
+    ok.onclick = () => { limparPedido(c.peer); criar(c, name); };
+    no.onclick = () => { limparPedido(c.peer); c.send({ t: 'no' }); setTimeout(() => c.close(), 300); };
+    box.append(s, ok, no); $('pend').append(box);
+  }
+  function limparPedido(id){ pend.delete(id); const b = document.getElementById('p-' + id); if (b) b.remove(); }
+
+  function onData(id, d){
+    if (!tiles.has(id) || !d) return;
+    if (d.t === 'text'){
+      const m = document.createElement('div'); m.className = 'msg'; m.textContent = String(d.text).slice(0, 300); put(id, m);
+    } else if (d.t === 'link') link(id, d.url);
+    else if (d.t === 'file') arquivo(id, d);
+    else if (d.t === 'deck') deck(id, d);
+    else if (d.t === 'nav') nav(id, d);
+  }
+  function arquivo(id, d){
+    const type = d.type || '', url = URL.createObjectURL(new Blob([d.data], { type: type || 'application/octet-stream' }));
+    let el;
+    if (type.startsWith('image/')){ el = new Image(); el.src = url; el.alt = d.name; }
+    else if (type.startsWith('video/')){ el = document.createElement('video'); el.src = url; el.controls = true; el.autoplay = true; el.playsInline = true; }
+    else if (type.startsWith('audio/')){ el = document.createElement('audio'); el.src = url; el.controls = true; el.autoplay = true; }
+    else if (type === 'application/pdf'){ el = document.createElement('iframe'); el.src = url; el.title = d.name; }
+    else { el = document.createElement('a'); el.href = url; el.download = d.name; el.className = 'btn'; el.textContent = 'Baixar ' + d.name; }
+    put(id, el, [url]); msg(st, 'Recebido: ' + d.name);
+  }
+  function embedUrl(u){
+    const h = u.hostname.replace(/^www\./, '');
+    let v = null;
+    if (h === 'youtu.be') v = u.pathname.slice(1);
+    else if (h.endsWith('youtube.com')) v = u.searchParams.get('v');
+    return v ? 'https://www.youtube.com/embed/' + encodeURIComponent(v) + '?autoplay=1' : null;
+  }
+  function link(id, raw){
+    let u; try { u = new URL(raw); if (!/^https?:$/.test(u.protocol)) throw 0; } catch (e) { return; }
+    const emb = embedUrl(u);
+    if (emb){ const f = document.createElement('iframe'); f.src = emb; f.allow = 'autoplay; fullscreen'; f.allowFullscreen = true; return put(id, f); }
+    const box = document.createElement('div'); box.className = 'body';
+    const p = document.createElement('p'); p.className = 'msg'; p.textContent = u.href;
+    const a = document.createElement('a'); a.href = u.href; a.target = '_blank'; a.rel = 'noopener'; a.className = 'btn'; a.textContent = 'Abrir ' + u.hostname;
+    const b = document.createElement('button'); b.className = 'sec'; b.textContent = 'Mostrar aqui (alguns sites bloqueiam)';
+    b.onclick = () => { const f = document.createElement('iframe'); f.src = u.href; put(id, f); };
+    box.append(p, a, b); put(id, box);
+  }
+  async function deck(id, d){
+    const t = tiles.get(id);
+    try {
+      if (d.kind === 'pdf'){
+        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(d.data) }).promise;
+        const c = document.createElement('canvas'); put(id, c);
+        t.deck = { pdf, view: c, i: 1, n: pdf.numPages };
+      } else {
+        const urls = d.pages.map(p => URL.createObjectURL(new Blob([p.data], { type: p.type })));
+        const im = new Image(); put(id, im, urls);
+        t.deck = { urls, view: im, i: 1, n: urls.length };
+      }
+      mostrar(id);
+    } catch (e) { msg(st, 'Não foi possível abrir os slides.', true); }
+  }
+  async function mostrar(id){
+    const t = tiles.get(id), k = t && t.deck; if (!k) return;
+    if (k.busy){ k.again = true; return; }
+    k.busy = true;
+    try {
+      if (k.pdf){
+        const pg = await k.pdf.getPage(k.i), vp = pg.getViewport({ scale: 2 });
+        k.view.width = vp.width; k.view.height = vp.height;
+        await pg.render({ canvasContext: k.view.getContext('2d'), viewport: vp }).promise;
+      } else k.view.src = k.urls[k.i - 1];
+      t.cap.textContent = t.name + ' – slide ' + k.i + ' de ' + k.n;
+      t.conn.send({ t: 'deckinfo', i: k.i, n: k.n });
+    } finally { k.busy = false; if (k.again){ k.again = false; mostrar(id); } }
+  }
+  function nav(id, d){
+    const t = tiles.get(id), k = t && t.deck; if (!k) return;
+    let i = k.i;
+    if (d.cmd === 'next') i++; else if (d.cmd === 'prev') i--; else if (d.cmd === 'goto') i = parseInt(d.n, 10) || 1;
+    k.i = Math.min(k.n, Math.max(1, i)); mostrar(id);
   }
 
   function novoPin(){
     const p = String(Math.floor(100000 + Math.random() * 900000));
     if (peer) peer.destroy();
-    peer = new Peer(PREFIX + p);
+    [...tiles.keys()].forEach(drop); pend.forEach((c, id) => limparPedido(id));
+    peer = new Peer(PREFIX + p, { config: ICE });
     peer.on('open', () => {
-      pin = p;
-      $('pin').textContent = p.slice(0,3) + ' ' + p.slice(3);
-      desenharQr(p);
-      msg(st, 'Aguardando o celular…');
+      $('pin').textContent = p.slice(0, 3) + ' ' + p.slice(3);
+      desenharQr(p); msg(st, 'Aguardando os celulares…');
     });
     peer.on('error', e => {
       if (e.type === 'unavailable-id') return novoPin();
       msg(st, 'Erro de conexão: ' + e.type + '. Clique em Novo PIN.', true);
     });
     peer.on('connection', c => {
-      c.on('open', () => msg(st, 'Celular conectado.'));
-      c.on('close', () => msg(st, 'Celular desconectado.'));
-      c.on('data', receber);
+      c.on('data', d => {
+        if (d && d.t === 'hello'){
+          if (tiles.has(c.peer) || pend.has(c.peer)) return;
+          const name = String(d.name || '').trim().slice(0, 30) || 'Aluno';
+          if ($('apr').checked) pedido(c, name); else criar(c, name);
+        } else onData(c.peer, d);
+      });
+      c.on('close', () => { limparPedido(c.peer); drop(c.peer); });
     });
     peer.on('call', ch => {
+      if (!tiles.has(ch.peer)) return ch.close();
       ch.answer();
       ch.on('stream', s => {
         const v = document.createElement('video');
-        v.autoplay = true; v.playsInline = true; v.muted = !somLigado; v.srcObject = s;
-        mostrar(v); msg(st, 'Recebendo transmissão ao vivo.');
+        v.autoplay = true; v.playsInline = true; v.muted = !som; v.srcObject = s; v.dataset.live = '1';
+        put(ch.peer, v); msg(st, 'Recebendo transmissão ao vivo.');
       });
-      ch.on('close', () => { limpar(); msg(st, 'Transmissão encerrada.'); });
+      ch.on('close', () => { const t = tiles.get(ch.peer); if (t && t.body.querySelector('[data-live]')) reset(ch.peer); });
     });
   }
-
-  function receber(d){
-    if (!d || !d.data) return;
-    const blob = new Blob([d.data], { type: d.type || 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    let el;
-    if ((d.type || '').startsWith('image/')){ el = new Image(); el.src = url; el.alt = d.name; }
-    else if ((d.type || '').startsWith('video/')){ el = document.createElement('video'); el.src = url; el.controls = true; el.autoplay = true; el.playsInline = true; }
-    else if ((d.type || '').startsWith('audio/')){ el = document.createElement('audio'); el.src = url; el.controls = true; el.autoplay = true; }
-    else if (d.type === 'application/pdf'){ el = document.createElement('iframe'); el.src = url; el.title = d.name; }
-    else { el = document.createElement('a'); el.href = url; el.download = d.name; el.className = 'btn'; el.textContent = 'Baixar ' + d.name; }
-    mostrar(el); lastUrl = url;
-    msg(st, 'Recebido: ' + d.name);
+  function desenharQr(p){
+    const box = $('qr'); box.innerHTML = '';
+    if (typeof QRCode === 'undefined' || location.protocol === 'file:') return;
+    new QRCode(box, { text: location.href.split('#')[0] + '#enviar-' + p, width: 150, height: 150, colorDark: '#12302a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
   }
 
   $('bFull').onclick = () => document.documentElement.requestFullscreen?.();
   $('bSom').onclick = () => {
-    somLigado = !somLigado;
-    const v = stage.querySelector('video'); if (v) v.muted = !somLigado;
-    $('bSom').textContent = somLigado ? 'Silenciar' : 'Ativar som';
+    som = !som; stage.querySelectorAll('video').forEach(v => v.muted = !som);
+    $('bSom').textContent = som ? 'Silenciar' : 'Ativar som';
   };
-  $('bLimpa').onclick = limpar;
-  $('bNovo').onclick = () => { limpar(); $('pin').textContent = '······'; $('qr').innerHTML = ''; msg(st, 'Gerando PIN…'); novoPin(); };
-  novoPin();
+  $('bGrade').onclick = () => { grade = !grade; $('bGrade').textContent = grade ? 'Ver um por vez' : 'Ver todos em grade'; refresh(); };
+  $('bLimpa').onclick = () => { if (focus) reset(focus); };
+  $('bNovo').onclick = () => { $('pin').textContent = '······'; $('qr').innerHTML = ''; msg(st, 'Gerando PIN…'); novoPin(); };
+  document.addEventListener('keydown', e => {
+    if (!focus || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') nav(focus, { cmd: 'next' });
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') nav(focus, { cmd: 'prev' });
+  });
+  refresh(); novoPin();
 }
 
-/* ---------- CELULAR / EMISSOR ---------- */
+/* ================= CELULAR / EMISSOR ================= */
 function enviar(){
   $('menu').hidden = true; $('send').hidden = false;
   const sst = $('sst');
-  const temTela = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
-  if (!temTela){ $('bTela').disabled = true; $('bTela').textContent = 'Transmitir tela (indisponível neste aparelho)'; }
-
-  $('pinIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('bConn').click(); });
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)){
+    $('bTela').disabled = true; $('bTela').textContent = 'Transmitir tela (indisponível neste aparelho)';
+  }
+  const enviarMsg = o => { try { conn.send(o); return true; } catch (e) { msg(sst, 'Conexão perdida.', true); return false; } };
 
   $('bConn').onclick = () => {
     pin = $('pinIn').value.replace(/\D/g, '');
     if (pin.length !== 6) return msg(sst, 'Digite os 6 números do PIN.', true);
+    const nome = $('nome').value.trim() || 'Aluno';
     msg(sst, 'Conectando…');
     if (peer) peer.destroy();
-    peer = new Peer();
+    peer = new Peer({ config: ICE });
     peer.on('error', e => msg(sst, e.type === 'peer-unavailable' ? 'PIN não encontrado. Confira o número no projetor.' : 'Erro de conexão: ' + e.type, true));
     peer.on('open', () => {
       conn = peer.connect(PREFIX + pin, { serialization: 'binary', reliable: true });
       const t = setTimeout(() => msg(sst, 'Não foi possível conectar. Verifique o PIN e a rede.', true), 12000);
-      conn.on('open', () => {
-        clearTimeout(t);
-        $('login').hidden = true; $('acoes').hidden = false;
-        msg(sst, 'Conectado ao projetor ' + pin + '.');
+      conn.on('open', () => { clearTimeout(t); conn.send({ t: 'hello', name: nome }); msg(sst, 'Aguardando o professor aceitar…'); });
+      conn.on('data', d => {
+        if (!d) return;
+        if (d.t === 'ok'){ $('login').hidden = true; $('acoes').hidden = false; msg(sst, 'Conectado como ' + nome + '.'); }
+        else if (d.t === 'no') msg(sst, 'O professor recusou a conexão.', true);
+        else if (d.t === 'deckinfo') $('dinfo').textContent = d.i + ' / ' + d.n;
       });
       conn.on('close', () => { parar(); $('login').hidden = false; $('acoes').hidden = true; msg(sst, 'Conexão encerrada.', true); });
     });
@@ -218,8 +386,36 @@ function enviar(){
     if (!f) return;
     if (f.size > 60 * 1024 * 1024) return msg(sst, 'Arquivo acima de 60 MB. Envie um menor.', true);
     msg(sst, 'Enviando ' + f.name + '…');
-    conn.send({ name: f.name, type: f.type, data: await f.arrayBuffer() });
-    msg(sst, 'Enviado: ' + f.name);
+    if (enviarMsg({ t: 'file', name: f.name, type: f.type, data: await f.arrayBuffer() })) msg(sst, 'Enviado: ' + f.name);
+  };
+
+  $('bDeck').onclick = () => $('deckIn').click();
+  $('deckIn').onchange = async e => {
+    const fs = [...e.target.files]; e.target.value = '';
+    if (!fs.length) return;
+    if (fs.reduce((s, f) => s + f.size, 0) > 60 * 1024 * 1024) return msg(sst, 'Slides acima de 60 MB no total.', true);
+    msg(sst, 'Enviando slides…');
+    const pdf = fs.find(f => f.type === 'application/pdf');
+    if (pdf) enviarMsg({ t: 'deck', kind: 'pdf', data: await pdf.arrayBuffer() });
+    else {
+      const imgs = fs.filter(f => f.type.startsWith('image/')).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      if (!imgs.length) return msg(sst, 'Escolha um PDF ou imagens.', true);
+      enviarMsg({ t: 'deck', kind: 'img', pages: await Promise.all(imgs.map(async f => ({ type: f.type, data: await f.arrayBuffer() }))) });
+    }
+    msg(sst, 'Slides enviados. Use os botões para trocar de slide.');
+  };
+  $('bPrev').onclick = () => enviarMsg({ t: 'nav', cmd: 'prev' });
+  $('bNext').onclick = () => enviarMsg({ t: 'nav', cmd: 'next' });
+  $('bGo').onclick = () => { const n = parseInt($('goN').value, 10); if (n > 0) enviarMsg({ t: 'nav', cmd: 'goto', n }); };
+
+  $('bTxt').onclick = () => {
+    const x = $('txt').value.trim(); if (!x) return;
+    if (enviarMsg({ t: 'text', text: x })){ $('txt').value = ''; msg(sst, 'Mensagem enviada.'); }
+  };
+  $('bLnk').onclick = () => {
+    const u = $('lnk').value.trim();
+    if (!/^https?:\/\//i.test(u)) return msg(sst, 'O link deve começar com http:// ou https://', true);
+    if (enviarMsg({ t: 'link', url: u })){ $('lnk').value = ''; msg(sst, 'Link enviado.'); }
   };
 
   async function transmitir(tipo){
@@ -228,7 +424,7 @@ function enviar(){
       localStream = tipo === 'tela'
         ? await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
         : await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false });
-    } catch (err){ return msg(sst, 'Permissão negada ou recurso indisponível.', true); }
+    } catch (err) { return msg(sst, 'Permissão negada ou recurso indisponível.', true); }
     call = peer.call(PREFIX + pin, localStream);
     localStream.getVideoTracks()[0].onended = parar;
     $('bStop').hidden = false;
@@ -237,8 +433,7 @@ function enviar(){
   function parar(){
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (call) call.close();
-    localStream = call = null;
-    $('bStop').hidden = true;
+    localStream = call = null; $('bStop').hidden = true;
   }
   $('bCam').onclick = () => transmitir('camera');
   $('bTela').onclick = () => transmitir('tela');
@@ -247,7 +442,7 @@ function enviar(){
   $('bSair').onclick = () => { parar(); if (conn) conn.close(); if (peer) peer.destroy(); location.hash = '#enviar'; location.reload(); };
 
   const m = location.hash.match(/^#enviar-(\d{6})$/);
-  if (m){ $('pinIn').value = m[1]; $('bConn').click(); }
+  if (m){ $('pinIn').value = m[1]; $('nome').focus(); }
 }
 </script>
 </body>
