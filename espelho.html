@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espelho PIN</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--board:#12302a;--board2:#0c231f;--chalk:#edefe8;--dim:#9db3aa;--yellow:#f2c94c;--bad:#ff8a7a}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--board);color:var(--chalk);font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:18px;line-height:1.5}
+main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:20px;text-align:center}
+h1{font-size:clamp(28px,5vw,44px);margin:0}
+p{margin:0;max-width:52ch}
+.dim{color:var(--dim)}
+button,.btn{font:inherit;font-weight:700;background:var(--yellow);color:#1b1b12;border:0;border-radius:10px;padding:14px 22px;cursor:pointer;min-height:48px}
+button.sec{background:transparent;color:var(--chalk);border:2px solid var(--dim)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
+.row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+#pin{font-size:clamp(64px,16vw,170px);font-weight:700;letter-spacing:.06em;color:var(--yellow);line-height:1}
+#stage{flex:1;width:100%;display:none;align-items:center;justify-content:center;min-height:0}
+#stage img,#stage video,#stage iframe{max-width:100%;max-height:60vh;width:100%;height:60vh;object-fit:contain;border:0;background:var(--board2)}
+#qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px}
+#qr{background:#fff;padding:10px;border-radius:12px;line-height:0}
+#qr:empty{display:none}
+#stage img{width:auto;height:auto}
+.proj.live #wait{display:none}
+.proj.live #stage{display:flex}
+.proj.live main{justify-content:flex-start}
+input[type=text]{font:inherit;font-size:36px;text-align:center;letter-spacing:.3em;width:min(320px,90vw);padding:10px;border-radius:10px;border:2px solid var(--dim);background:var(--board2);color:var(--chalk)}
+#st,#sst{min-height:1.6em;color:var(--dim)}
+.err{color:var(--bad)!important}
+.card{background:var(--board2);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;align-items:center;width:min(440px,100%)}
+@media (prefers-reduced-motion:no-preference){button{transition:transform .1s}button:active{transform:scale(.97)}}
+</style>
+</head>
+<body>
+
+<main id="menu">
+  <h1>Espelho PIN</h1>
+  <p class="dim">Escolha o papel deste aparelho.</p>
+  <div class="row">
+    <button onclick="go('#projetor')">Este é o projetor</button>
+    <button class="sec" onclick="go('#enviar')">Quero enviar conteúdo</button>
+  </div>
+</main>
+
+<div id="proj" class="proj" hidden>
+  <main>
+    <div id="wait">
+      <p class="dim">No celular, escaneie o QR code abaixo ou abra esta página e digite o PIN:</p>
+      <div id="pin" aria-live="polite">······</div>
+    </div>
+    <div id="stage"></div>
+    <div id="st">Gerando PIN…</div>
+    <div class="row">
+      <button class="sec" id="bFull">Tela cheia</button>
+      <button class="sec" id="bSom">Ativar som</button>
+      <button class="sec" id="bLimpa">Limpar tela</button>
+      <button class="sec" id="bNovo">Novo PIN</button>
+    </div>
+    <div id="qrbox">
+      <div id="qr"></div>
+      <p class="dim">Aponte a câmera do celular para enviar conteúdo</p>
+    </div>
+  </main>
+</div>
+
+<main id="send" hidden>
+  <h1>Enviar ao projetor</h1>
+  <div class="card" id="login">
+    <label for="pinIn">PIN mostrado no projetor</label>
+    <input id="pinIn" type="text" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000">
+    <button id="bConn">Conectar</button>
+  </div>
+  <div class="card" id="acoes" hidden>
+    <input id="file" type="file" accept="image/*,video/*,application/pdf,audio/*" hidden>
+    <button id="bFile">Enviar arquivo</button>
+    <button id="bCam">Transmitir câmera</button>
+    <button id="bFlip" class="sec">Trocar câmera (frente/trás)</button>
+    <button id="bTela">Transmitir tela</button>
+    <button id="bStop" class="sec" hidden>Parar transmissão</button>
+    <button id="bSair" class="sec">Desconectar</button>
+  </div>
+  <div id="sst" aria-live="polite"></div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const PREFIX = 'espelho-pin-';
+const go = h => { location.hash = h; location.reload(); };
+let peer, conn, call, localStream, facing = 'environment', pin = '', lastUrl = null;
+
+function msg(el, t, bad){ el.textContent = t; el.classList.toggle('err', !!bad); }
+
+if (typeof Peer === 'undefined'){
+  document.body.innerHTML = '<main><h1>Sem conexão com a biblioteca</h1><p>Verifique a internet e recarregue a página.</p></main>';
+} else if (location.hash === '#projetor') projetor();
+else if (location.hash.startsWith('#enviar')) enviar();
+
+/* ---------- PROJETOR ---------- */
+function projetor(){
+  $('menu').hidden = true; $('proj').hidden = false;
+  const st = $('st');
+  const stage = $('stage');
+  let somLigado = false;
+
+  function limpar(){
+    if (lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    stage.innerHTML = '';
+    $('proj').classList.remove('live');
+  }
+  function mostrar(el){ limpar(); stage.appendChild(el); $('proj').classList.add('live'); }
+
+  function desenharQr(p){
+    const box = $('qr');
+    box.innerHTML = '';
+    if (typeof QRCode === 'undefined' || location.protocol === 'file:') return;
+    new QRCode(box, {
+      text: location.href.split('#')[0] + '#enviar-' + p,
+      width: 150, height: 150,
+      colorDark: '#12302a', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  function novoPin(){
+    const p = String(Math.floor(100000 + Math.random() * 900000));
+    if (peer) peer.destroy();
+    peer = new Peer(PREFIX + p);
+    peer.on('open', () => {
+      pin = p;
+      $('pin').textContent = p.slice(0,3) + ' ' + p.slice(3);
+      desenharQr(p);
+      msg(st, 'Aguardando o celular…');
+    });
+    peer.on('error', e => {
+      if (e.type === 'unavailable-id') return novoPin();
+      msg(st, 'Erro de conexão: ' + e.type + '. Clique em Novo PIN.', true);
+    });
+    peer.on('connection', c => {
+      c.on('open', () => msg(st, 'Celular conectado.'));
+      c.on('close', () => msg(st, 'Celular desconectado.'));
+      c.on('data', receber);
+    });
+    peer.on('call', ch => {
+      ch.answer();
+      ch.on('stream', s => {
+        const v = document.createElement('video');
+        v.autoplay = true; v.playsInline = true; v.muted = !somLigado; v.srcObject = s;
+        mostrar(v); msg(st, 'Recebendo transmissão ao vivo.');
+      });
+      ch.on('close', () => { limpar(); msg(st, 'Transmissão encerrada.'); });
+    });
+  }
+
+  function receber(d){
+    if (!d || !d.data) return;
+    const blob = new Blob([d.data], { type: d.type || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    let el;
+    if ((d.type || '').startsWith('image/')){ el = new Image(); el.src = url; el.alt = d.name; }
+    else if ((d.type || '').startsWith('video/')){ el = document.createElement('video'); el.src = url; el.controls = true; el.autoplay = true; el.playsInline = true; }
+    else if ((d.type || '').startsWith('audio/')){ el = document.createElement('audio'); el.src = url; el.controls = true; el.autoplay = true; }
+    else if (d.type === 'application/pdf'){ el = document.createElement('iframe'); el.src = url; el.title = d.name; }
+    else { el = document.createElement('a'); el.href = url; el.download = d.name; el.className = 'btn'; el.textContent = 'Baixar ' + d.name; }
+    mostrar(el); lastUrl = url;
+    msg(st, 'Recebido: ' + d.name);
+  }
+
+  $('bFull').onclick = () => document.documentElement.requestFullscreen?.();
+  $('bSom').onclick = () => {
+    somLigado = !somLigado;
+    const v = stage.querySelector('video'); if (v) v.muted = !somLigado;
+    $('bSom').textContent = somLigado ? 'Silenciar' : 'Ativar som';
+  };
+  $('bLimpa').onclick = limpar;
+  $('bNovo').onclick = () => { limpar(); $('pin').textContent = '······'; $('qr').innerHTML = ''; msg(st, 'Gerando PIN…'); novoPin(); };
+  novoPin();
+}
+
+/* ---------- CELULAR / EMISSOR ---------- */
+function enviar(){
+  $('menu').hidden = true; $('send').hidden = false;
+  const sst = $('sst');
+  const temTela = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+  if (!temTela){ $('bTela').disabled = true; $('bTela').textContent = 'Transmitir tela (indisponível neste aparelho)'; }
+
+  $('pinIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('bConn').click(); });
+
+  $('bConn').onclick = () => {
+    pin = $('pinIn').value.replace(/\D/g, '');
+    if (pin.length !== 6) return msg(sst, 'Digite os 6 números do PIN.', true);
+    msg(sst, 'Conectando…');
+    if (peer) peer.destroy();
+    peer = new Peer();
+    peer.on('error', e => msg(sst, e.type === 'peer-unavailable' ? 'PIN não encontrado. Confira o número no projetor.' : 'Erro de conexão: ' + e.type, true));
+    peer.on('open', () => {
+      conn = peer.connect(PREFIX + pin, { serialization: 'binary', reliable: true });
+      const t = setTimeout(() => msg(sst, 'Não foi possível conectar. Verifique o PIN e a rede.', true), 12000);
+      conn.on('open', () => {
+        clearTimeout(t);
+        $('login').hidden = true; $('acoes').hidden = false;
+        msg(sst, 'Conectado ao projetor ' + pin + '.');
+      });
+      conn.on('close', () => { parar(); $('login').hidden = false; $('acoes').hidden = true; msg(sst, 'Conexão encerrada.', true); });
+    });
+  };
+
+  $('bFile').onclick = () => $('file').click();
+  $('file').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    if (f.size > 60 * 1024 * 1024) return msg(sst, 'Arquivo acima de 60 MB. Envie um menor.', true);
+    msg(sst, 'Enviando ' + f.name + '…');
+    conn.send({ name: f.name, type: f.type, data: await f.arrayBuffer() });
+    msg(sst, 'Enviado: ' + f.name);
+  };
+
+  async function transmitir(tipo){
+    parar();
+    try {
+      localStream = tipo === 'tela'
+        ? await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+        : await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false });
+    } catch (err){ return msg(sst, 'Permissão negada ou recurso indisponível.', true); }
+    call = peer.call(PREFIX + pin, localStream);
+    localStream.getVideoTracks()[0].onended = parar;
+    $('bStop').hidden = false;
+    msg(sst, tipo === 'tela' ? 'Transmitindo a tela.' : 'Transmitindo a câmera.');
+  }
+  function parar(){
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    if (call) call.close();
+    localStream = call = null;
+    $('bStop').hidden = true;
+  }
+  $('bCam').onclick = () => transmitir('camera');
+  $('bTela').onclick = () => transmitir('tela');
+  $('bFlip').onclick = () => { facing = facing === 'environment' ? 'user' : 'environment'; if (localStream) transmitir('camera'); };
+  $('bStop').onclick = () => { parar(); msg(sst, 'Transmissão parada.'); };
+  $('bSair').onclick = () => { parar(); if (conn) conn.close(); if (peer) peer.destroy(); location.hash = '#enviar'; location.reload(); };
+
+  const m = location.hash.match(/^#enviar-(\d{6})$/);
+  if (m){ $('pinIn').value = m[1]; $('bConn').click(); }
+}
+</script>
+</body>
+</html>
